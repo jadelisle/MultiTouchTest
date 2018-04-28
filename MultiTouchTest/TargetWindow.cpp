@@ -13,8 +13,9 @@ LRESULT CALLBACK TargetWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 
 TargetWindow::TargetWindow() :
     _title(NULL),
-    _hwnd((HWND) -1),
-    _is_active(FALSE)
+    _hwnd(NULL),
+    _is_active(FALSE),
+    _last_err(-1)
 {
 }
 
@@ -22,8 +23,7 @@ TargetWindow::~TargetWindow()
 {
 }
 
-void TargetWindow::init(HINSTANCE hInstance, HWND parent, const WCHAR* title,
-    int x, int y, int width, int height)
+void TargetWindow::init(HINSTANCE hInstance, HWND parent, const WCHAR* title)
 {
     this->_title = title;
 
@@ -37,15 +37,23 @@ void TargetWindow::init(HINSTANCE hInstance, HWND parent, const WCHAR* title,
         wcex.cbClsExtra = 0;
         wcex.cbWndExtra = 0;
         wcex.hInstance = hInstance;
+        wcex.hIcon = NULL;
+        wcex.hCursor = LoadCursor(nullptr, IDC_CROSS);
         wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
+        wcex.lpszMenuName = nullptr;
         wcex.lpszClassName = szTargetWindowClass;
+        wcex.hIconSm = NULL;
 
         windowClass = RegisterClassEx(&wcex);
     }
 
-    this->_hwnd = CreateWindowW(szTargetWindowClass, this->_title,
-        WS_CHILD | WS_BORDER, x, y, width, height,
+    this->_hwnd = CreateWindowW(szTargetWindowClass, nullptr,
+        WS_CHILD | WS_BORDER, 0, 0, 100, 100,
         parent, nullptr, hInstance, nullptr);
+
+    if (this->_hwnd == NULL) {
+        this->_last_err = GetLastError();
+    }
 
     RegisterTouchWindow(this->_hwnd, 0);
     ShowWindow(this->_hwnd, SW_SHOW);
@@ -88,16 +96,12 @@ LRESULT CALLBACK TargetWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 {
     TargetWindow *t = TargetWindowList::targetWindowFromHwnd(hWnd);
 
-    if (t == nullptr) {
-        return 0;
-    }
-
     switch (message) {
         case WM_MOUSEMOVE:
         {
             int x = GET_X_LPARAM(lParam);
             int y = GET_Y_LPARAM(lParam);
-            t->onMouseMove(x, y, wParam);
+            if (t) t->onMouseMove(x, y, wParam);
         }
         break;
 
@@ -105,19 +109,19 @@ LRESULT CALLBACK TargetWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
         {
             int x = GET_X_LPARAM(lParam);
             int y = GET_Y_LPARAM(lParam);
-            t->onPointerUpdate(x, y, wParam);
+            if (t) t->onPointerUpdate(x, y, wParam);
         }
         break;
 
         case WM_ERASEBKGND:
         {
-            t->onEraseBackground((HDC) wParam);
+            if (t) t->onEraseBackground((HDC) wParam);
             return 1L;
         }
 
         case WM_PAINT:
         {
-            t->onPaint();
+            if (t) t->onPaint();
         }
         break;
 
@@ -126,6 +130,9 @@ LRESULT CALLBACK TargetWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
             PostQuitMessage(0);
         }
         break;
+
+        default:
+            return DefWindowProc(hWnd, message, wParam, lParam);
     }
 
     return 0;

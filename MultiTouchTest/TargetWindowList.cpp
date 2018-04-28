@@ -13,15 +13,24 @@ TargetWindowList::~TargetWindowList()
 {
 }
 
-void TargetWindowList::addTargetWindow(TargetWindow* t)
+void TargetWindowList::add(TargetWindow* t)
 {
     targetWindows[nextFreeTargetWindowSlot++] = t;
+}
+
+TargetWindow* TargetWindowList::at(int index)
+{
+    if (0 <= index && NUM_TARGET_WINDOWS > index) {
+        return targetWindows[index];
+    }
+
+    return nullptr;
 }
 
 TargetWindow* TargetWindowList::targetWindowFromHwnd(HWND hwnd)
 {
     for (TargetWindow* t : targetWindows) {
-        if (t->getHwnd() == hwnd) {
+        if (t && t->getHwnd() == hwnd) {
             return t;
         }
     }

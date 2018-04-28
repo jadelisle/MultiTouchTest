@@ -9,7 +9,8 @@ class TargetWindowList
 public:
     ~TargetWindowList();
 
-    static void addTargetWindow(TargetWindow* t);
+    static void add(TargetWindow* t);
+    static TargetWindow* at(int index);
     static TargetWindow* targetWindowFromHwnd(HWND hwnd);
     static void destroyAll();
 
