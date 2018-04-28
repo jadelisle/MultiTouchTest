@@ -16,8 +16,6 @@ public:
 
     HWND getHwnd() const;
 
-    static void destroyAll();
-
 private:
     const WCHAR* _title;
     HWND _hwnd;

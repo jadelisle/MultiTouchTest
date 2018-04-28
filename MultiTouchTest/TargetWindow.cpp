@@ -1,18 +1,15 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "TargetWindow.h"
+#include "TargetWindowList.h"
 
 #include <windowsx.h>
 #include <stdio.h>
 
-#define NUM_TARGET_WINDOWS 2
-static int nextFreeTargetWindowSlot = 1;
 static ATOM windowClass = (ATOM) 0;
 static WCHAR szTargetWindowClass[256];
-static TargetWindow* targetWindows[NUM_TARGET_WINDOWS] = { nullptr };
 
 LRESULT CALLBACK TargetWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-static TargetWindow* targetWindowFromHwnd(HWND hwnd);
 
 TargetWindow::TargetWindow() :
     _title(NULL),
@@ -53,8 +50,6 @@ void TargetWindow::init(HINSTANCE hInstance, HWND parent, const WCHAR* title,
     RegisterTouchWindow(this->_hwnd, 0);
     ShowWindow(this->_hwnd, SW_SHOW);
     UpdateWindow(this->_hwnd);
-
-    targetWindows[nextFreeTargetWindowSlot++] = this;
 }
 
 void TargetWindow::onMouseMove(int x, int y, WPARAM wParam)
@@ -89,16 +84,9 @@ void TargetWindow::onEraseBackground(HDC hdc)
     Rectangle(hdc, rect.left, rect.top, rect.right, rect.bottom);
 }
 
-void TargetWindow::destroyAll()
-{
-    for (TargetWindow* t : targetWindows) {
-        delete t;
-    }
-}
-
 LRESULT CALLBACK TargetWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    TargetWindow *t = targetWindowFromHwnd(hWnd);
+    TargetWindow *t = TargetWindowList::targetWindowFromHwnd(hWnd);
 
     if (t == nullptr) {
         return 0;
@@ -141,15 +129,4 @@ LRESULT CALLBACK TargetWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
     }
 
     return 0;
-}
-
-static TargetWindow* targetWindowFromHwnd(HWND hwnd)
-{
-    for (TargetWindow* t : targetWindows) {
-        if (t->getHwnd() == hwnd) {
-            return t;
-        }
-    }
-    
-    return nullptr;
 }
