@@ -5,19 +5,19 @@
 #include <windowsx.h>
 #include <stdio.h>
 
-LRESULT CALLBACK TargetWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-
 #define NUM_TARGET_WINDOWS 2
 static int nextFreeTargetWindowSlot = 1;
 static ATOM windowClass = (ATOM) 0;
 static WCHAR szTargetWindowClass[256];
-
 static TargetWindow* targetWindows[NUM_TARGET_WINDOWS] = { nullptr };
+
+LRESULT CALLBACK TargetWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 static TargetWindow* targetWindowFromHwnd(HWND hwnd);
 
 TargetWindow::TargetWindow() :
     _title(NULL),
-    _hwnd((HWND) -1)
+    _hwnd((HWND) -1),
+    _is_active(FALSE)
 {
 }
 
@@ -25,7 +25,8 @@ TargetWindow::~TargetWindow()
 {
 }
 
-void TargetWindow::init(HINSTANCE hInstance, const WCHAR* title)
+void TargetWindow::init(HINSTANCE hInstance, HWND parent, const WCHAR* title,
+    int x, int y, int width, int height)
 {
     this->_title = title;
 
@@ -45,12 +46,47 @@ void TargetWindow::init(HINSTANCE hInstance, const WCHAR* title)
         windowClass = RegisterClassEx(&wcex);
     }
 
+    this->_hwnd = CreateWindowW(szTargetWindowClass, this->_title,
+        WS_CHILD | WS_BORDER, x, y, width, height,
+        parent, nullptr, hInstance, nullptr);
+
+    RegisterTouchWindow(this->_hwnd, 0);
+    ShowWindow(this->_hwnd, SW_SHOW);
+    UpdateWindow(this->_hwnd);
+
     targetWindows[nextFreeTargetWindowSlot++] = this;
 }
 
-void TargetWindow::onMouseMove(int x, int y)
+void TargetWindow::onMouseMove(int x, int y, WPARAM wParam)
 {
+}
 
+void TargetWindow::onPointerUpdate(int x, int y, WPARAM wParam)
+{
+}
+
+void TargetWindow::onPaint()
+{
+    PAINTSTRUCT ps;
+    HDC hdc = BeginPaint(this->_hwnd, &ps);
+    // paint stuff here
+    EndPaint(this->_hwnd, &ps);
+}
+
+void TargetWindow::onEraseBackground(HDC hdc)
+{
+    RECT rect;
+    GetClientRect(this->_hwnd, &rect);
+    SelectObject(hdc, GetStockObject(DC_BRUSH));
+    
+    if (this->_is_active) {
+        SetDCBrushColor(hdc, RGB(0, 255, 0));
+    }
+    else {
+        SetDCBrushColor(hdc, RGB(0, 0, 255));
+    }
+
+    Rectangle(hdc, rect.left, rect.top, rect.right, rect.bottom);
 }
 
 void TargetWindow::destroyAll()
@@ -73,10 +109,35 @@ LRESULT CALLBACK TargetWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
         {
             int x = GET_X_LPARAM(lParam);
             int y = GET_Y_LPARAM(lParam);
-            t->onMouseMove(x, y);
-
-            return DefWindowProc(hWnd, message, wParam, lParam);
+            t->onMouseMove(x, y, wParam);
         }
+        break;
+
+        case WM_POINTERUPDATE:
+        {
+            int x = GET_X_LPARAM(lParam);
+            int y = GET_Y_LPARAM(lParam);
+            t->onPointerUpdate(x, y, wParam);
+        }
+        break;
+
+        case WM_ERASEBKGND:
+        {
+            t->onEraseBackground((HDC) wParam);
+            return 1L;
+        }
+
+        case WM_PAINT:
+        {
+            t->onPaint();
+        }
+        break;
+
+        case WM_DESTROY:
+        {
+            PostQuitMessage(0);
+        }
+        break;
     }
 
     return 0;
