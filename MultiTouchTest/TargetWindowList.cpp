@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "MultiTouchTest.h"
 #include "TargetWindow.h"
 #include "TargetWindowList.h"
 

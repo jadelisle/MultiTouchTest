@@ -2,8 +2,6 @@
 
 class TargetWindow;
 
-#define NUM_TARGET_WINDOWS 2
-
 class TargetWindowList
 {
 public:
