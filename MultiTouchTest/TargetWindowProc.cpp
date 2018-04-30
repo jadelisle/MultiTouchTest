@@ -32,7 +32,13 @@ LRESULT CALLBACK TargetWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 
         case WM_TOUCH:
         {
-            if (t) t->onTouch(wParam, lParam);
+            if (t) {
+                if (t->onTouch(wParam, lParam)) {
+                    CloseTouchInputHandle((HTOUCHINPUT) lParam);
+                } else {
+                    return DefWindowProc(hWnd, message, wParam, lParam);
+                }
+            }
         }
         break;
 

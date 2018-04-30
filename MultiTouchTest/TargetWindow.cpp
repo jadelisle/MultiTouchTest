@@ -94,11 +94,12 @@ void TargetWindow::onPointerUpdate(int x, int y, WPARAM wParam)
     fflush(stdout);
 }
 
-void TargetWindow::onTouch(WPARAM wParam, LPARAM lParam)
+BOOL TargetWindow::onTouch(WPARAM wParam, LPARAM lParam)
 {
     UINT num_inputs;
     PTOUCHINPUT inputs;
     POINT pt;
+    BOOL retval = FALSE;
 
     num_inputs = LOWORD(wParam);
     inputs = new TOUCHINPUT[num_inputs];
@@ -128,10 +129,13 @@ void TargetWindow::onTouch(WPARAM wParam, LPARAM lParam)
             }
 
             CloseTouchInputHandle((HTOUCHINPUT) lParam);
+            retval = TRUE;
         }
     }
 
     delete [] inputs;
+
+    return retval;
 }
 
 void TargetWindow::onPaint()

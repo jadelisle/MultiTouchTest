@@ -70,3 +70,8 @@ Of Note:
     to distinguish which touch is active. Both the window handle and touch IDs
     are assigned by Windows and change between runs of the application
     (window handles), and between touches and releases on the device (touch IDs).
+  * A dialog box appears at the very beginning of application execution. It's
+    sole purpose is to inform the user if a touch device has been found on the
+    system. It must be dismissed before the window displaying the target
+    windows will appear on the screen. The easiest way to dismiss the dialog
+    box is simply to press the enter key.

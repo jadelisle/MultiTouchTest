@@ -13,7 +13,8 @@ public:
     void onPointerEnter(int x, int y, WPARAM wParam);
     void onPointerLeave(int x, int y, WPARAM wParam);
     void onPointerUpdate(int x, int y, WPARAM wParam);
-    void onTouch(WPARAM wParam, LPARAM lParam);
+    BOOL onTouch(WPARAM wParam, LPARAM lParam);
+
     void onPaint();
     void onEraseBackground(HDC hdc);
 
